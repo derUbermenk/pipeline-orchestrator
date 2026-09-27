@@ -1,0 +1,10 @@
+# images/pipeline-orchestrator-base/pipeline_orchestrator/pyproject.toml
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pipeline-orchestrator"
+version = "0.1.0"
+description = "Shared internal package for Airflow DAG parsers across projects"
+requires-python = ">=3.10"
