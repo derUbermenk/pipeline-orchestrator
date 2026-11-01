@@ -2,4 +2,4 @@ data/*/
 dags/*_parser.py
 projects/*
 !projects/.gitkeep
-
+*venv*
