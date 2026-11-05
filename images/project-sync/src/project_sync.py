@@ -130,7 +130,7 @@ def copy_parsers(project: str, dest: str, pattern: str | None = None) -> None:
     if not sources:  # refuse to continue, so a bad pattern can't wipe the folder
         raise FileNotFoundError(f"{project}: no parser files match {pattern!r} in {dest}")
 
-    dags_dir = os.path.realpath(os.environ.get("DAGS_DIR", "/dags"))
+    dags_dir = os.path.realpath(os.environ.get("PROJECT_DAGS_DIR", "/dags/projects"))
     target_dir = os.path.join(dags_dir, project)
     if os.path.dirname(os.path.realpath(target_dir)) != dags_dir:  # safety guard
         raise ValueError(f"{project}: target {target_dir} escapes {dags_dir}")
