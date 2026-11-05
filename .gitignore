@@ -1,5 +1,6 @@
 data/*/
-dags/*_parser.py
+dags/**/*_parser.py
+dags/projects
 projects/*
 !projects/.gitkeep
 *venv*
