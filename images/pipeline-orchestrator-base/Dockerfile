@@ -1,5 +1,7 @@
-ARG AIRFLOW_BASE_IMAGE="apache/airflow:2.9.0-python3.10"
-FROM ${AIRFLOW_BASE_IMAGE}
+FROM apache/airflow:3.3.2-python3.12
+
+ARG AIRFLOW_VERSION=3.3.2
+ARG PYTHON_VERSION=3.12
 
 # apache-airflow-providers-cncf-kubernetes: gives KubernetesPodOperator
 # pyyaml: yaml.safe_load — usually already present as an Airflow dependency,
