@@ -5,3 +5,4 @@ projects/*
 !projects/.gitkeep
 *venv*
 secrets
+.evn
