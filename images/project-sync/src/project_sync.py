@@ -98,6 +98,7 @@ def sync_project(project: str, url: str, branch: str, dest: str,
     """Clone or refresh the repo into dest, then copy its parser file into DAGS_DIR."""
     check_project_name(project)
     env, key = _git_env(project)
+    ensure_passwd_entry()
     try:
         logging.info(f"Syncing {project}: {url} @ {branch} -> {dest}")
         if os.path.isdir(os.path.join(dest, ".git")):
