@@ -14,16 +14,12 @@ CONFIG_LOCATION = os.environ.get("PROJECT_SYNC_CONFIG", "s3://my-bucket/path/pro
 # pipeline-orchestrator owns this DAG, so its pods run in this namespace
 NAMESPACE = "pipeline-orchestrator"
 
-# "hostpath" for local dev (kind/minikube/Docker Desktop), "pvc" for EFS-backed prod
-STORAGE = os.environ.get("SERA_STORAGE", "hostpath")
-
-# node-side folders for local dev (must match the cluster's extra mounts)
-DAGS_HOST_PATH = os.environ.get("SERA_DAGS_HOST_PATH", "/mnt/dags")
-PROJECTS_HOST_PATH = os.environ.get("SERA_PROJECTS_HOST_PATH", "/mnt/projects")
-
-# PVC names for prod (both backed by the EFS that EC2 also mounts)
-DAGS_PVC = "dags-efs"
-PROJECTS_PVC = "projects-efs"
+# One PVC rooted at <repo>/pipelines, holding:
+#   dags/      pipeline-orchestrator/ (tracked code) + projects/ (parsers, written by this sync)
+#   projects/  per-project configs the parsers read (written by this sync)
+# Local (kind): backed by a hostPath PV. Prod: backed by a static EFS PV.
+# The name must match the PVC manifest in kubernetes-configs/storage.
+PIPELINES_PVC = "sera-pipelines"
 
 # run the pod as the same user as Airflow so it can read what the pod writes
 AIRFLOW_UID = int(os.environ.get("AIRFLOW_UID", "50000"))
@@ -33,17 +29,11 @@ XCOM_FILE = "/airflow/xcom/return.json"  # the XCom sidecar only reads this path
 
 
 # ---- volumes ----------------------------------------------------------------
-def shared_volume(name: str, host_path: str, claim: str) -> k8s.V1Volume:
-    if STORAGE == "pvc":
-        return k8s.V1Volume(
-            name=name,
-            persistent_volume_claim=k8s.V1PersistentVolumeClaimVolumeSource(claim_name=claim),
-        )
-    return k8s.V1Volume(
-        name=name,
-        host_path=k8s.V1HostPathVolumeSource(path=host_path, type="DirectoryOrCreate"),
-    )
-
+# The code only names the claim. The PV / StorageClass decides what backs it.
+pipelines_volume = k8s.V1Volume(
+    name="pipelines",
+    persistent_volume_claim=k8s.V1PersistentVolumeClaimVolumeSource(claim_name=PIPELINES_PVC),
+)
 
 # Secret volume: one file per project key, in RAM, only visible to this pod.
 # The script copies the key to a private 0600 file before calling ssh.
@@ -52,15 +42,13 @@ git_keys_volume = k8s.V1Volume(
     secret=k8s.V1SecretVolumeSource(secret_name=GIT_KEYS_SECRET, default_mode=0o444),
 )
 
-VOLUMES = [
-    git_keys_volume,
-    shared_volume("dags", DAGS_HOST_PATH, DAGS_PVC),
-    shared_volume("projects", PROJECTS_HOST_PATH, PROJECTS_PVC),
-]
+VOLUMES = [git_keys_volume, pipelines_volume]
 VOLUME_MOUNTS = [
     k8s.V1VolumeMount(name="git-keys", mount_path="/secrets/git", read_only=True),
-    k8s.V1VolumeMount(name="dags", mount_path="/dags"),
-    k8s.V1VolumeMount(name="projects", mount_path="/projects"),
+    # pipelines/dags -> /dags (the script writes parsers to /dags/projects/<project>)
+    k8s.V1VolumeMount(name="pipelines", mount_path="/dags", sub_path="dags"),
+    # pipelines/projects -> /projects (the script clones each project here)
+    k8s.V1VolumeMount(name="pipelines", mount_path="/projects", sub_path="projects"),
 ]
 
 
@@ -80,6 +68,8 @@ def project_sync():
         name="project-sync-discover",
         namespace=NAMESPACE,
         image=IMAGE,
+        # a locally loaded kind image is never in a registry: don't try to pull it
+        image_pull_policy="IfNotPresent",
         arguments=["--sync_config", "--config_location", CONFIG_LOCATION],
         env_vars={"XCOM_PATH": XCOM_FILE},
         do_xcom_push=True,
@@ -87,12 +77,13 @@ def project_sync():
         on_finish_action="delete_pod",
     )
 
-    # 2. One pod per project: clone to /projects/<project>, copy parser to /dags
+    # 2. One pod per project: clone to /projects/<project>, copy parser to /dags/projects/<project>
     sync = KubernetesPodOperator.partial(
         task_id="sync",
         name="project-sync-project",
         namespace=NAMESPACE,
         image=IMAGE,
+        image_pull_policy="IfNotPresent",
         volumes=VOLUMES,
         volume_mounts=VOLUME_MOUNTS,
         env_vars={
