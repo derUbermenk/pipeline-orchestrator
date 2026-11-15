@@ -9,7 +9,7 @@ from kubernetes.client import models as k8s
 
 # ---- config -----------------------------------------------------------------
 IMAGE = os.environ.get("PROJECT_SYNC_IMAGE", "project-sync:latest")
-CONFIG_LOCATION = os.environ.get("PROJECT_SYNC_CONFIG", "s3://my-bucket/path/projects.yaml")
+CONFIG_LOCATION = os.environ.get("PROJECT_SYNC_CONFIG", "/projects/projects.yaml")
 
 CLUSTER_KWARGS = {
     "kubernetes_conn_id": None,                       # skip the missing kubernetes_default connection
@@ -76,6 +76,8 @@ def project_sync():
         name="project-sync-discover",
         namespace=NAMESPACE,
         image=IMAGE,
+        volumes=VOLUMES,
+        volume_mounts=VOLUME_MOUNTS,
         # a locally loaded kind image is never in a registry: don't try to pull it
         image_pull_policy="IfNotPresent",
         arguments=["--sync_config", "--config_location", CONFIG_LOCATION],
