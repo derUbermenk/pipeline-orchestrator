@@ -74,6 +74,7 @@ services:
       - ./projects:/pipeline-orchestrator/projects
       - ./secrets/kubeconfig-sera:/home/airflow/.kube/config:ro
     environment: *airflow_environment
+    networks: [default, kind]
     command: scheduler
 
   dag-processor:
@@ -90,3 +91,7 @@ services:
 
 volumes:
   logs:
+
+networks:
+  kind:
+    external: true
