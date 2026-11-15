@@ -1,7 +1,7 @@
 data/*/
 dags/**/*_parser.py
-pipelines/dags/projects
-pipelines/projects
+pipelines/dags/projects/* /
+pipelines/projects/* /
 *venv*
 secrets
 .evn
