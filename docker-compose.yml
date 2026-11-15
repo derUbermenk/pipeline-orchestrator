@@ -56,7 +56,7 @@ services:
       - logs:/opt/airflow/logs
       - ./dags:/pipeline-orchestrator/dags
       - ./projects:/pipeline-orchestrator/projects
-      - ~/.kube/config:/home/airflow/.kube/config:ro
+      - ./secrets/kubeconfig-sera:/home/airflow/.kube/config:ro
     environment: *airflow_environment
     command: api-server
 
@@ -72,7 +72,7 @@ services:
       - logs:/opt/airflow/logs
       - ./dags:/pipeline-orchestrator/dags
       - ./projects:/pipeline-orchestrator/projects
-      - ~/.kube/config:/home/airflow/.kube/config:ro
+      - ./secrets/kubeconfig-sera:/home/airflow/.kube/config:ro
     environment: *airflow_environment
     command: scheduler
 
@@ -83,7 +83,7 @@ services:
       - logs:/opt/airflow/logs
       - ./dags:/pipeline-orchestrator/dags
       - ./projects:/pipeline-orchestrator/projects
-      - ~/.kube/config:/home/airflow/.kube/config:ro
+      - ./secrets/kubeconfig-sera:/home/airflow/.kube/config:ro
     command: dag-processor
     depends_on:
       - postgres
