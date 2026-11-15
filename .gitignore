@@ -1,8 +1,7 @@
 data/*/
 dags/**/*_parser.py
-dags/projects
-projects/*
-!projects/.gitkeep
+pipelines/dags/projects
+pipelines/projects
 *venv*
 secrets
 .evn
