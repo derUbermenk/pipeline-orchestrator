@@ -54,8 +54,8 @@ services:
       - "8080:8080"
     volumes:
       - logs:/opt/airflow/logs
-      - ./dags:/pipeline-orchestrator/dags
-      - ./projects:/pipeline-orchestrator/projects
+      - ./pipelines/dags:/pipeline-orchestrator/dags
+      - ./pipelines/projects:/pipeline-orchestrator/projects
       - ./secrets/kubeconfig-sera:/home/airflow/.kube/config:ro
     environment: *airflow_environment
     command: api-server
@@ -70,8 +70,8 @@ services:
         condition: service_completed_successfully
     volumes:
       - logs:/opt/airflow/logs
-      - ./dags:/pipeline-orchestrator/dags
-      - ./projects:/pipeline-orchestrator/projects
+      - ./pipelines/dags:/pipeline-orchestrator/dags
+      - ./pipelines/projects:/pipeline-orchestrator/projects
       - ./secrets/kubeconfig-sera:/home/airflow/.kube/config:ro
     environment: *airflow_environment
     networks: [default, kind]
@@ -82,8 +82,8 @@ services:
     environment: *airflow_environment
     volumes:
       - logs:/opt/airflow/logs
-      - ./dags:/pipeline-orchestrator/dags
-      - ./projects:/pipeline-orchestrator/projects
+      - ./pipelines/dags:/pipeline-orchestrator/dags
+      - ./pipelines/projects:/pipeline-orchestrator/projects
       - ./secrets/kubeconfig-sera:/home/airflow/.kube/config:ro
     command: dag-processor
     depends_on:
